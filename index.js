@@ -6,6 +6,7 @@ const Toppings = require('./models/toppings');
 const app = express();
 
 app.use(express.urlencoded({extended: false}));
+app.use(express.json());
 
 // Connect to Mongo!
 mongoose.connect('mongodb://localhost/nme-backend');
@@ -69,12 +70,12 @@ app.put('/pizzas/:id', (req, res) => {
 //   })
 // })
 
-// app.delete('/delete/:name', (req, res) => {
-//   Pizza.remove({name: req.params.name}, function(err, pizzas) {
-//     if (err) res.json(err);
-//     res.json({message: "DELETED!", pizzas})
-//   })
-// })
+app.delete('/:id', (req, res) => {
+  Pizza.findByIdAndRemove(req.params.id, function(err, pizzas) {
+    if (err) res.json(err);
+    res.json({message: "DELETED!", pizzas})
+  })
+})
 
 // app.get('/:name', (req, res) => {
 //   Pizza.findOne({name: req.params.name}, function(err, pizza) {
