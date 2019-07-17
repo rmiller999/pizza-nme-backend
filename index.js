@@ -10,7 +10,7 @@ app.use(express.urlencoded({extended: false}));
 // Connect to Mongo!
 mongoose.connect('mongodb://localhost/nme-backend');
 
-app.get('/', (req, res) => {
+app.get('/pizzas', (req, res) => {
   // find one
   Pizza.find({}, function(err, pizzas) {
     if (err) res.json(err)
@@ -18,6 +18,18 @@ app.get('/', (req, res) => {
   })
 });
 
+// get one pizza
+app.get('/pizzas/:id', (req, res) => {
+  Pizza.findById(req.params.id).populate('toppings').exec( (err, pizza) => {
+    if (!err) {
+      res.status(200).json(pizza);
+    } else {
+      res.status(500).json(err);
+    }
+  })
+})
+
+// create one pizza
 app.post('/pizzas', (req, res) => {
   Pizza.create({
     name: req.body.name,
@@ -29,30 +41,52 @@ app.post('/pizzas', (req, res) => {
   })
 })
 
-app.get('/pizzaupdate/:name', (req, res) => {
-  Pizza.findOneAndUpdate({name: req.params.name},
-  {$set:
-    {name: req.body.name,
+// update one pizza
+app.put('/pizzas/:id', (req, res) => {
+  Pizza.findByIdAndUpdate(req.params.id, {
+    name: req.body.name,
     price: req.body.price,
     size: req.body.size,
-    delivery: req.body.delivery} 
-  },{new:true}, function(err, pizzas) {
-    if (err) res.json(err)
-    res.json(pizzas)
-  })
-})
+    delivery: req.body.delivery
+  }, {
+    new: true
+  }, (err, pizza) => {
+    res.status(203).json(pizza);
+  });
+});
 
-app.get('/delete/:name', (req, res) => {
-  Pizza.remove({name: req.params.name}, function(err, pizzas) {
-    if (err) res.json(err);
-    res.json({message: "DELETED!", pizzas})
-  })
-})
 
-app.get('/:name', (req, res) => {
-  Pizza.findOne({name: req.params.name}, function(err, pizza) {
-    if (err) res.json(err)
-    res.json(pizza)
+// app.get('/pizzaupdate/:name', (req, res) => {
+//   Pizza.findOneAndUpdate({name: req.params.name},
+//   {$set:
+//     {name: req.body.name,
+//     price: req.body.price,
+//     size: req.body.size,
+//     delivery: req.body.delivery} 
+//   },{new:true}, function(err, pizzas) {
+//     if (err) res.json(err)
+//     res.json(pizzas)
+//   })
+// })
+
+// app.delete('/delete/:name', (req, res) => {
+//   Pizza.remove({name: req.params.name}, function(err, pizzas) {
+//     if (err) res.json(err);
+//     res.json({message: "DELETED!", pizzas})
+//   })
+// })
+
+// app.get('/:name', (req, res) => {
+//   Pizza.findOne({name: req.params.name}, function(err, pizza) {
+//     if (err) res.json(err)
+//     res.json(pizza)
+//   })
+// })
+
+// GET /api/pizzas/:qid/toppings -  Get all toppings associated with given pizza
+app.get('/pizzas/:pid/toppings', (req, res) => {
+  Pizza.findById(req.params.pid).populate('toppings').exec((err, pizza) => {
+    res.status(200).json(pizza.toppings);
   })
 })
 
@@ -64,8 +98,8 @@ app.get('/pizzas/:pid/toppings/:tid', (req, res) => {
 })
 
 // Creates a new topping for that pizza
-app.post('/pizzas/:name/toppings', (req, res) => {
-  Pizza.findOne({name: req.params.name}, function(err, pizza) {
+app.post('/pizzas/:id/toppings', (req, res) => {
+  Pizza.findById(req.params.id, function(err, pizza) {
     Toppings.create({name: req.body.name}, function(err, topping){
       pizza.toppings.push(topping._id)
       pizza.save(function(err, pizza) {
